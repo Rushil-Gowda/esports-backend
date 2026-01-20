@@ -9,6 +9,7 @@ from app.api.schemas.user import UserCreate
 from app.database.models import User
 from app.config import security_settings
 from app.utils import generate_access_token
+from sqlalchemy.exc import IntegrityError
 
 password_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -22,9 +23,17 @@ class UserService:
             password_hash = password_context.hash(credentials.password)
         )
         self.session.add(user)
-        await self.session.commit()
-        await self.session.refresh(user)
 
+        try:
+            await self.session.commit()
+        except IntegrityError:
+            await self.session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="User with this email already exists",
+            )
+
+        await self.session.refresh(user)
         return user
     
     async def token(self,email,password) -> str:
