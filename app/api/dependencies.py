@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends, HTTPException,status
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.core.security import oauth2_scheme
 from app.database.models import User
 
